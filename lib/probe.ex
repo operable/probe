@@ -18,6 +18,6 @@ defmodule Probe do
   Send an event to be logged.
   """
   def notify(event),
-    do: GenEvent.notify(__MODULE__, event)
+    do: GenEvent.sync_notify(__MODULE__, event)
 
 end
