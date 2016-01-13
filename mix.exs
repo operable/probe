@@ -11,7 +11,8 @@ defmodule Probe.Mixfile do
   end
 
   def application do
-    [applications: [:logger]]
+    [applications: [:logger],
+     mod: {Probe, []}]
   end
 
   defp deps do
