@@ -5,6 +5,7 @@ defmodule Probe.TolerantFile.Test do
 
   setup do
     new_empty_file = empty_file_path("tolerant_file.txt")
+    on_exit(fn() -> File.rm_rf!(new_empty_file) end)
     {:ok, [path: new_empty_file]}
   end
 
