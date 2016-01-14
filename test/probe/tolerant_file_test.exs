@@ -16,7 +16,7 @@ defmodule Probe.TolerantFile.Test do
 
   test "#open returns different instance if underlying file has closed", %{path: path} do
     {:ok, original} = TolerantFile.open(path)
-    File.rm!(path)
+    System.cmd("rm", ["-f", path], into: IO.stream(:stdio, :line))
     {:ok, refreshed} = TolerantFile.open(original)
 
     # They point to the same file, but the internal details are
