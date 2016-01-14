@@ -29,7 +29,7 @@ defmodule Probe.JSONLogHandler do
   end
 
   def handle_event(event, state) when is_map(event),
-    do: event |> inspect |> handle_event(state)
+    do: event |> Poison.encode! |> handle_event(state)
   def handle_event(event, state) when is_binary(event) do
     {:ok, log_file} = TolerantFile.puts(state.log_file, event)
     {:ok, %{state | log_file: log_file}}
