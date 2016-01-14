@@ -1,9 +1,10 @@
 defmodule Probe.TolerantFile do
   require Logger
+
   @moduledoc """
-  Encapsulates file path, inode, and IO device information together,
-  allowing transparent writing to a given path in the face of file
-  closing / moving.
+  Encapsulates file path, inode, and file descriptor information
+  together, allowing transparent writing to a given path in the face
+  of file closing / moving.
 
   Supports the logging of data to files which will be rotated by
   another system process.
@@ -14,7 +15,7 @@ defmodule Probe.TolerantFile do
   general-purpose tool.
   """
 
-  @file_modes [:append, :utf8, :sync]
+  @file_modes [:append, :sync, :raw]
 
   @typedoc """
   A file that is tolerant of the underlying filesystem device closing
@@ -22,15 +23,15 @@ defmodule Probe.TolerantFile do
 
   # Fields
 
-  * `abs_path`: the absolute path to the file
-  * `io_device`: an open file handle to the file
-  * `inode`: the inode of the file that `io_device` is pointed at
+  * `path`: the absolute path to the file
+  * `fd`: an open file descriptor to the file
+  * `inode`: the inode of the file that `fd` is pointed at
   """
-  @type t :: %__MODULE__{abs_path: String.t,
-                         io_device: :file.io_device,
+  @type t :: %__MODULE__{path: String.t,
+                         fd: :file.fd,
                          inode: term}
-  defstruct [abs_path: nil,
-             io_device: nil,
+  defstruct [path: nil,
+             fd: nil,
              inode: nil]
 
   @doc """
@@ -39,62 +40,79 @@ defmodule Probe.TolerantFile do
   When given a file path, a new `#{inspect __MODULE__}` instance is
   created.
 
-  When given a `#{inspect __MODULE__}` instance, if the current inode
-  associated with the path does not match the inode of the instance,
-  the IO device of the instance is closed and a "fresh" instance is
-  returned.
+  When given a `#{inspect __MODULE__}` instance, if the underlying
+  file is determined to have changed (the current inode associated
+  with the path does not match the inode of the instance) the open
+  file descriptor of the instance is closed and a "fresh" instance is
+  returned, with a new open file descriptor.
+
+  (Note that, depending on the environment, it is possible that the
+  same inode will get reused between an "old" `#{inspect __MODULE__}`
+  and one that has been "refreshed" in this way; we have observed this
+  in Docker, for instance. This can happen if the underlying file has
+  been deleted, and the `#{inspect __MODULE__}` re-creates it in the
+  process of being refreshed. In such a situation, however, the file
+  descriptor that is opened will be different.)
 
   Always opens files with the modes `#{inspect @file_modes}`. See
   `File.open/2` for details.
   """
   def open(path) when is_binary(path) do
-    abs_path = Path.expand(path)
-    case File.open(abs_path, @file_modes) do
-      {:ok, io_device} ->
-        {:ok, inode} = inode(abs_path)
-        {:ok, %__MODULE__{abs_path: abs_path, io_device: io_device, inode: inode}}
+    path = Path.expand(path)
+    case File.open(path, @file_modes) do
+      {:ok, fd} ->
+        inode = File.stat!(path).inode
+        {:ok, %__MODULE__{path: path, fd: fd, inode: inode}}
       {:error, _}=error ->
         error
     end
   end
-  def open(%__MODULE__{inode: inode}=file) do
-    case inode(file.abs_path) do
-      {:ok, ^inode} ->
-        {:ok, file}
-      _ ->
-        close(file)
-        open(file.abs_path)
+  def open(%__MODULE__{}=file) do
+    if changed?(file) do
+      close(file)
+      open(file.path)
+    else
+      {:ok, file}
     end
   end
 
   @doc """
-  Closes the underlying IO device of `file`.
+  Closes the underlying file descriptor of `file`.
   """
   def close(%__MODULE__{}=file),
-    do: File.close(file.io_device)
+    do: File.close(file.fd)
 
   @doc """
-  Wrapper for `IO.puts/2`.
-
-  Writes `content` to `file`, respecting underlying file closings. A
+  Appends `content` to `file`, respecting underlying file closings. A
   newline is appended after `content`.
 
-  Returns a possibly-new instance of `#{inspect __MODULE__}`.
+  Returns a possibly-new instance of `#{inspect __MODULE__}` in case
+  the underlying file has changed.
   """
   def puts(%__MODULE__{}=file, content) do
     {:ok, refreshed} = open(file)
-    :ok = IO.puts(refreshed.io_device, content)
+    # Window for a race condition here
+    :ok = :file.write(refreshed.fd, to_string(content <> "\n"))
     {:ok, refreshed}
   end
 
-  # Returns the inode of the file at `path`, or `nil` if the file is
-  # not accessible.
-  defp inode(path) do
+  @doc """
+  Heuristically determine whether or not a TolerantFile still points
+  to the same file on the filesystem, or if that file has been rotated
+  out from under it.
+  """
+  def changed?(%__MODULE__{inode: inode, path: path}) do
     case File.stat(path) do
-      {:ok, %File.Stat{inode: inode}} ->
-        {:ok, inode}
-      _ ->
-        nil
+      {:ok, %File.Stat{inode: ^inode}} ->
+        # We're still looking at the same file
+        false
+      {:ok, %File.Stat{}} ->
+        # The file exists, but it's a different one from what we were
+        # looking at originally
+        true
+      {:error, :enoent} ->
+        # The file went away (so it definitely changed!)
+        true
     end
   end
 
