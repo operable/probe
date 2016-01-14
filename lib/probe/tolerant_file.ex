@@ -51,13 +51,15 @@ defmodule Probe.TolerantFile do
     abs_path = Path.expand(path)
     case File.open(abs_path, @file_modes) do
       {:ok, io_device} ->
+        :ok = :file.sync(io_device)
         {:ok, inode} = inode(abs_path)
         {:ok, %__MODULE__{abs_path: abs_path, io_device: io_device, inode: inode}}
       {:error, _}=error ->
         error
     end
   end
-  def open(%__MODULE__{inode: inode}=file) do
+  def open(%__MODULE__{inode: inode, io_device: io_device}=file) do
+    :ok = :file.sync(io_device)
     case inode(file.abs_path) do
       {:ok, ^inode} ->
         {:ok, file}
