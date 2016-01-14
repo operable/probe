@@ -17,11 +17,12 @@ defmodule Probe.TolerantFile.Test do
   test "#open returns different instance if underlying file has closed", %{path: path} do
     {:ok, original} = TolerantFile.open(path)
     System.cmd("rm", ["-f", path], into: IO.stream(:stdio, :line))
+    refute File.exists?(path)
     {:ok, refreshed} = TolerantFile.open(original)
+    assert File.exists?(path)
 
     # They point to the same file, but the internal details are
     # different
-    refute File.exists?(path)
     refute original == refreshed
     assert original.abs_path == refreshed.abs_path
     refute original.inode == refreshed.inode
