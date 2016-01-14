@@ -21,6 +21,7 @@ defmodule Probe.TolerantFile.Test do
 
     # They point to the same file, but the internal details are
     # different
+    refute File.exists?(path)
     refute original == refreshed
     assert original.abs_path == refreshed.abs_path
     refute original.inode == refreshed.inode
