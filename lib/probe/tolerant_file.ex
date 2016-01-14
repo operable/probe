@@ -91,10 +91,26 @@ defmodule Probe.TolerantFile do
   """
   def puts(%__MODULE__{}=file, content) do
     {:ok, refreshed} = open(file)
-    # Window for a race condition here
-    :ok = :file.write(refreshed.fd, to_string(content <> "\n"))
-    {:ok, refreshed}
+    case do_put(refreshed.fd, content) do
+      :ok ->
+        {:ok, refreshed}
+      {:error, _} = error ->
+        Logger.warn("Failed to write to `#{refreshed.path}`: #{inspect error}; retrying the write one time")
+        {:ok, refreshed_again} = open(refreshed)
+        case do_put(refreshed_again.fd, content) do
+          :ok ->
+            Logger.info("Retried write to `#{refreshed_again.path}` succeeded")
+            {:ok, refreshed_again}
+          {:error, _} = error ->
+            Logger.error("Retried write to `#{refreshed_again.path}` failed: #{inspect error}")
+            error
+        end
+    end
   end
+
+  # Ensure unicode and intervening newlines
+  defp do_put(fd, content),
+    do: :file.write(fd, to_string(content <> "\n"))
 
   @doc """
   Heuristically determine whether or not a TolerantFile still points
