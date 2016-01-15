@@ -37,7 +37,7 @@ defmodule Probe.JSONLogHandler do
       {:ok, json} ->
         handle_event(json, state)
       error ->
-        Logger.error("Could not encode event as JSON: #{inspect event}")
+        Logger.error("Could not encode event as JSON: `#{inspect event}`; error: #{inspect error}")
         {:ok, state}
     end
   end
@@ -50,6 +50,7 @@ defmodule Probe.JSONLogHandler do
         # file. Since we're leaving an audit trail here, not being
         # able to write that trail is bad, so we slam down on the
         # self-destruct button to bring the entire VM down
+        Logger.error("Could not write event to log file: #{inspect error}; shutting down the VM")
         :erlang.halt(@exit_code, [{:flush, true}])
     end
   end
