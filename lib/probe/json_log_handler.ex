@@ -12,6 +12,10 @@ defmodule Probe.JSONLogHandler do
 
   @log_file "events.log"
 
+  # If we can't log, then we don't run, and we'll shut down the VM
+  # with this code.
+  @exit_code 10
+
   @type state :: %__MODULE__{log_file: Probe.TolerantFile.t}
   defstruct [log_file: nil]
 
@@ -29,12 +33,25 @@ defmodule Probe.JSONLogHandler do
   end
 
   def handle_event(event, state) when is_map(event) do
-    Logger.warn("EVENT: #{inspect event}")
-    event |> inspect |> handle_event(state)
+    case Poison.encode(event) do
+      {:ok, json} ->
+        handle_event(json, state)
+      error ->
+        Logger.error("Could not encode event as JSON: #{inspect event}")
+        {:ok, state}
+    end
   end
   def handle_event(event, state) when is_binary(event) do
-    {:ok, log_file} = TolerantFile.puts(state.log_file, event)
-    {:ok, %{state | log_file: log_file}}
+    case TolerantFile.puts(state.log_file, event) do
+      {:ok, log_file} ->
+        {:ok, %{state | log_file: log_file}}
+      error ->
+        # Something happened and we couldn't write to the log
+        # file. Since we're leaving an audit trail here, not being
+        # able to write that trail is bad, so we slam down on the
+        # self-destruct button to bring the entire VM down
+        :erlang.halt(@exit_code, [{:flush, true}])
+    end
   end
 
   defp log_path,

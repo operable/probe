@@ -5,6 +5,7 @@ defmodule Probe.TolerantFile.Test do
 
   setup do
     new_empty_file = empty_file_path("tolerant_file.txt")
+    on_exit(fn() -> File.rm_rf!(new_empty_file) end)
     {:ok, [path: new_empty_file]}
   end
 
@@ -22,13 +23,8 @@ defmodule Probe.TolerantFile.Test do
     # They point to the same file, but the internal details are
     # different
     refute original == refreshed
-    assert original.abs_path == refreshed.abs_path
-    refute original.inode == refreshed.inode
-    refute original.io_device == refreshed.io_device
-
-    # Old file handle is closed
-    refute Process.alive?(original.io_device)
-    assert Process.alive?(refreshed.io_device)
+    assert original.path == refreshed.path
+    refute original.fd == refreshed.fd
   end
 
   test "#open works when target file doesn't exist yet" do
@@ -36,7 +32,7 @@ defmodule Probe.TolerantFile.Test do
     refute File.exists?(path)
 
     {:ok, file} = TolerantFile.open(path)
-    assert file.abs_path == path
+    assert file.path == path
     assert File.exists?(path)
   end
 
