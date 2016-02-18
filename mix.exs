@@ -16,10 +16,8 @@ defmodule Probe.Mixfile do
   end
 
   defp deps do
-    [
-      {:ex_doc, "~> 0.10", only: :dev},
-      {:earmark, "~> 0.1", only: :dev},
-      {:mix_test_watch, "~> 0.1.1", only: :test}
-    ]
+    [{:ex_doc, "~> 0.11.4", only: :dev},
+     {:earmark, "~> 0.2.1", only: :dev},
+     {:mix_test_watch, "~> 0.2.5", only: :dev}]
   end
 end
