@@ -17,3 +17,7 @@ or, to run tests at each file change:
 ## Documentation
 
     mix docs && open doc/index.html
+
+## Filing Issues
+
+Probe issues are tracked centrally in [Cog's](https://github.com/operable/cog/issues) issue tracker.
