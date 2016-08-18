@@ -4,7 +4,7 @@ defmodule Probe.Mixfile do
   def project do
     [app: :probe,
      version: "0.13.0",
-     elixir: "~> 1.2",
+     elixir: "~> 1.3.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -16,8 +16,9 @@ defmodule Probe.Mixfile do
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.11.4", only: :dev},
-     {:earmark, "~> 0.2.1", only: :dev},
-     {:mix_test_watch, "~> 0.2.5", only: :dev}]
+    [{:poison, "~> 2.0"},
+     {:ex_doc, "~> 0.13", only: :dev},
+     {:earmark, "~> 1.0", only: :dev},
+     {:mix_test_watch, "~> 0.2", only: :dev}]
   end
 end
