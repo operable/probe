@@ -3,7 +3,7 @@ defmodule Probe.Mixfile do
 
   def project do
     [app: :probe,
-     version: "0.16.0",
+     version: "0.15.0",
      elixir: "~> 1.3.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
