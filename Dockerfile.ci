@@ -1,4 +1,8 @@
 FROM operable/elixir:1.3.1-r2
 
-WORKDIR /code
-COPY . /code
+RUN adduser -h /home/tester -D tester
+COPY . /home/tester/code
+RUN chown -R tester /home/tester/code
+WORKDIR /home/tester/code
+USER tester
+RUN mix local.hex --force
