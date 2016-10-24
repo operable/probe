@@ -1,0 +1,13 @@
+FROM operable/elixir:1.3.1-r4
+
+RUN adduser -h /home/tester -D tester
+
+WORKDIR /home/tester/code
+COPY mix.exs mix.lock config /home/tester/code/
+RUN mix deps.get
+
+COPY . /home/tester/code
+RUN chown -R tester /home/tester/code
+
+USER tester
+RUN mix local.hex --force
