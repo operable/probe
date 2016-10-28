@@ -1,5 +1,7 @@
 # Probe
 
+[![Build status](https://badge.buildkite.com/ccbb1aada3f36a4867f1bc77a532452225422dcfd1800ae1cb.svg?branch=master)](https://buildkite.com/operable/probe)
+
 Event logging for [Cog](https://github.com/operable/cog).
 
 ## Build
