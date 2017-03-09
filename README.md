@@ -1,5 +1,8 @@
 # Probe
 
+[![Build Status](https://travis-ci.org/operable/probe.svg?branch=master)](https://travis-ci.org/operable/probe)
+[![Coverage Status](https://coveralls.io/repos/github/operable/probe/badge.svg?branch=master)](https://coveralls.io/github/operable/probe?branch=master)
+
 Event logging for [Cog](https://github.com/operable/cog).
 
 ## Build
