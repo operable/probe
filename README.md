@@ -1,5 +1,7 @@
 # Probe
 
+[![Build Status](https://travis-ci.org/operable/probe.svg?branch=master)](https://travis-ci.org/operable/probe)
+
 Event logging for [Cog](https://github.com/operable/cog).
 
 ## Build
