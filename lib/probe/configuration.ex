@@ -9,8 +9,9 @@ defmodule Probe.Configuration do
   Probe's logs (`:probe/:log_directory`). Defaults to `audit_logs` in
   the current directory.
   """
-  def log_directory,
-    do: Path.absname(Application.get_env(:probe, :log_directory, "audit_logs"))
+  def log_directory do
+    Path.absname(Application.get_env(:probe, :log_directory, "audit_logs"))
+  end
 
   @doc """
   Raises a `Probe.ConfigurationError` if the log directory exists and
@@ -19,7 +20,7 @@ defmodule Probe.Configuration do
   Does _not_ perform any checks that the directory can be written to.
   """
   def ensure_log_directory! do
-    dir = log_directory
+    dir = log_directory()
     if File.exists?(dir) do
       if File.dir?(dir) do
         :ok
@@ -38,5 +39,4 @@ defmodule Probe.Configuration do
     Logger.info("Writing audit logs to the `#{dir}` directory")
     :ok
   end
-
 end

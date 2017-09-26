@@ -79,8 +79,7 @@ defmodule Probe.TolerantFile do
   @doc """
   Closes the underlying file descriptor of `file`.
   """
-  def close(%__MODULE__{}=file),
-    do: File.close(file.fd)
+  def close(%__MODULE__{}=file), do: File.close(file.fd)
 
   @doc """
   Appends `content` to `file`, respecting underlying file closings. A
@@ -109,8 +108,7 @@ defmodule Probe.TolerantFile do
   end
 
   # Ensure unicode and intervening newlines
-  defp do_put(fd, content),
-    do: :file.write(fd, to_string(content <> "\n"))
+  defp do_put(fd, content), do: :file.write(fd, to_string(content <> "\n"))
 
   @doc """
   Heuristically determine whether or not a TolerantFile still points
@@ -131,5 +129,4 @@ defmodule Probe.TolerantFile do
         true
     end
   end
-
 end

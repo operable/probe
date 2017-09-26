@@ -16,7 +16,5 @@ defmodule Probe do
   @doc """
   Send an event to be logged.
   """
-  def notify(event),
-    do: GenEvent.sync_notify(Probe.EventManager, event)
-
+  def notify(event), do: GenEvent.sync_notify(Probe.EventManager, event)
 end

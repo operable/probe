@@ -20,7 +20,7 @@ defmodule Probe.JSONLogHandler do
   defstruct [log_file: nil]
 
   def init(_) do
-    path = log_path
+    path = log_path()
     Logger.info("Attempting to open JSON-formatted event log file `#{path}`")
     case TolerantFile.open(path) do
       {:ok, file} ->
@@ -55,7 +55,6 @@ defmodule Probe.JSONLogHandler do
     end
   end
 
-  defp log_path,
-    do: Path.join(Probe.Configuration.log_directory, @log_file)
+  defp log_path, do: Path.join(Probe.Configuration.log_directory, @log_file)
 
 end
